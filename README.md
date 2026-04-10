@@ -47,3 +47,8 @@ PREPARAR MAQUINA
 sudo dnf update
 sudo dnf install git
 sudo dnf install python3
+sudo dnf install pip
+sudo pip install fastapi 
+sudo pip install "uvicorn[standard]"    
+
+sudo uvicorn api:app --host 0.0.0.0 --port 80
