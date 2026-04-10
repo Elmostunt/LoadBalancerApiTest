@@ -27,7 +27,7 @@ def hello():
 
 Ya que tú usas uvicorn:
 
-uvicorn main:app --reload
+uvicorn api:app --reload
 
 
 🌐 Probar endpoints
@@ -41,3 +41,9 @@ FastAPI te levanta docs automáticamente:
 
 Swagger:
 http://localhost:8000/docs
+
+
+PREPARAR MAQUINA 
+sudo dnf update
+sudo dnf install git
+sudo dnf install python3
