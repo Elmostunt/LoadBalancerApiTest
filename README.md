@@ -52,3 +52,4 @@ sudo pip install fastapi
 sudo pip install "uvicorn[standard]"    
 
 sudo uvicorn api:app --host 0.0.0.0 --port 80
+uvicorn api:app --host localhost --port 80
