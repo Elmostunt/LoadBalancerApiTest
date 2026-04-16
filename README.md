@@ -47,10 +47,10 @@ uvicorn api:app --host 0.0.0.0 --port 8000
 sudo dnf update -y
 sudo dnf install git -y
 sudo dnf install python3 -y
-
-pip3 install fastapi
-pip3 install "uvicorn[standard]"
-pip3 install gunicorn
+sudo dnf install pip -y
+pip install fastapi
+pip install "uvicorn[standard]"
+pip install gunicorn
 ```
 
 ---
