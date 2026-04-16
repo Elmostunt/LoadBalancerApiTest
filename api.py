@@ -3,11 +3,10 @@ from fastapi import FastAPI
 app = FastAPI()
 
 # Healthcheck en "/"
-@app.get("/health",status_code=200)
+@app.get("/health")
 def healthcheck():
     return {
-        "status": "ok",
-        "message": "API funcionando correctamente 🚀"
+        "status": "ok"
     }
 
 # Endpoint Hello World
