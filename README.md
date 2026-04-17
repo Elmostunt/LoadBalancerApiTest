@@ -1,87 +1,25 @@
+Aquí tienes el **README completo integrado**, con:
+
+* Orden correcto paso a paso
+* Corrección de **Security Group del Load Balancer (asociación incluida)**
+* Anexo de **Auto Scaling + pruebas de carga**
+* Todo en un solo documento listo para usar en clase
+
+---
+
 # 🚀 LoadBalancerApiTest
 
 API de ejemplo en **FastAPI** para desplegar en múltiples EC2 detrás de un **Load Balancer (ALB)**.
 
 ---
 
-# 🧩 1. API
-
-Endpoints disponibles:
-
-```python
-@app.get("/health")
-def healthcheck():
-    return {"status": "ok"}
-
-@app.get("/hello")
-def hello():
-    return {"message": "Hello World"}
-```
+# 📌 PASO A PASO
 
 ---
 
-# ▶️ 2. Ejecución local
+# 🏗️ 1. Arquitectura
 
-```bash
-uvicorn api:app --host 0.0.0.0 --port 8000
-```
-
----
-
-# 🌐 3. Probar endpoints
-
-* Healthcheck:
-  [http://localhost:8000/health](http://localhost:8000/health)
-
-* Hello:
-  [http://localhost:8000/hello](http://localhost:8000/hello)
-
-* Swagger:
-  [http://localhost:8000/docs](http://localhost:8000/docs)
-
----
-
-# 🖥️ 4. Preparar EC2 (Amazon Linux)
-
-```bash
-sudo dnf update -y
-sudo dnf install git -y
-sudo dnf install python3 -y
-sudo dnf install pip -y
-pip install fastapi
-pip install "uvicorn[standard]"
-pip install gunicorn
-```
-
----
-
-# 📦 5. Clonar proyecto
-
-```bash
-git clone https://github.com/Elmostunt/LoadBalancerApiTest.git
-cd LoadBalancerApiTest
-```
-
----
-
-# ⚙️ 6. Ejecutar API en EC2 (FORMA CORRECTA)
-
-```bash
-gunicorn -w 3 -k uvicorn.workers.UvicornWorker api:app -b 0.0.0.0:8000
-```
-
----
-
-# ❌ MALAS PRÁCTICAS (evitar)
-
-```bash
-uvicorn api:app --host localhost --port 8000   # ❌ no accesible desde LB
-uvicorn api:app --port 80                      # ❌ innecesario + sudo
-```
-
----
-
-# 🏗️ 7. Arquitectura
+-La idea es que desde internet podamos accder a nuestras aplicaciones por medio del Load Balancer
 
 ```text
 Internet
@@ -93,9 +31,13 @@ EC2 (puerto 8000)
 
 ---
 
-# 🔐 8. Configuración de Seguridad
+# 🔐 2. Configuración de Seguridad
+
+# Crear grupos de Seguridad .-
 
 ## Security Group del Load Balancer
+
+**Este grupo se asociará al momento de crear el Load Balancer**
 
 | Tipo | Puerto | Origen    |
 | ---- | ------ | --------- |
@@ -105,6 +47,8 @@ EC2 (puerto 8000)
 
 ## Security Group de EC2
 
+**Este grupo se asociará en la plantilla de creación de instancias EC2**
+
 | Tipo       | Puerto | Origen               |
 | ---------- | ------ | -------------------- |
 | SSH        | 22     | TU_IP                |
@@ -112,19 +56,44 @@ EC2 (puerto 8000)
 
 ---
 
-# ⚙️ 9. Load Balancer (ALB)
+# 🖥️ 3. Crear plantilla de creación de instancias EC2
+
+Usar Maquinas Gratuitas
+
+Dejar como Grupo de seguridad el creado anteriormente
+
+Crear 2 o mas maquinas virtuales
+
+---
+
+# ⚙️ 4. Load Balancer (ALB) Configuraciones
 
 ## Listener
 
 * HTTP : 80
 
-## Forward
+## Security Group del Load Balancer
 
-* Target Group
+* Al momento de crear el Load Balancer, **asociar el Security Group del Load Balancer**
+* Este grupo debe permitir:
+
+| Tipo | Puerto | Origen    |
+| ---- | ------ | --------- |
+| HTTP | 80     | 0.0.0.0/0 |
 
 ---
 
-# 🎯 10. Target Group
+## Forward
+
+* Target Group / Grupo de desino
+
+Crear Grupo de destino
+
+* Asociar Maquinas Virtales creadas con plantilla de ejecucion
+
+---
+
+# 🎯 5. Target Group
 
 ## Configuración
 
@@ -147,25 +116,73 @@ EC2 (puerto 8000)
 
 ---
 
-# 🚨 11. Errores comunes
+# 🛠️ 6. Preparar EC2 (Amazon Linux)
 
-### ❌ Mezclar puertos
-
-* EC2 en 8000 pero TG en 80
-
-### ❌ Usar localhost
-
-* LB no puede conectarse
-
-### ❌ Abrir EC2 al mundo
-
-```text
-8000 → 0.0.0.0/0
+```bash
+sudo dnf update -y
+sudo dnf install git -y
+sudo dnf install python3 -y
+sudo dnf install pip -y
+pip install fastapi
+pip install "uvicorn[standard]"
+pip install gunicorn
 ```
 
-### ❌ Editar reglas en vez de recrearlas
+---
 
-* AWS no permite cambiar de IP → SG
+# 📦 7. Clonar proyecto
+
+```bash
+git clone https://github.com/Elmostunt/LoadBalancerApiTest.git
+cd LoadBalancerApiTest
+```
+
+---
+
+# 🧩 8. Conociendo la API
+
+Endpoints disponibles:
+
+```python
+@app.get("/health")
+def healthcheck():
+    return {"status": "ok"}
+
+@app.get("/hello")
+def hello():
+    return {"message": "Hello World"}
+```
+
+---
+
+# ▶️ 9. Ejecución local
+
+```bash
+uvicorn api:app --host 0.0.0.0 --port 8000
+```
+
+---
+
+# ⚙️ 10. Ejecutar API en EC2 (FORMA CORRECTA)
+
+```bash
+gunicorn -w 3 -k uvicorn.workers.UvicornWorker api:app -b 0.0.0.0:8000
+```
+
+---
+
+# 🌐 11. Probar endpoints
+
+* Healthcheck:
+  [http://localhost:8000/health](http://localhost:8000/health)
+  http://<DNS>:8000/health
+
+* Hello:
+  [http://localhost:8000/hello](http://localhost:8000/hello)
+  http://<DNS>:8000/hello
+
+* Swagger:
+  [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ---
 
@@ -191,3 +208,168 @@ http://<LOAD_BALANCER_DNS>/health
 * El Load Balancer recibe en **80**
 * Solo el LB puede acceder a la EC2
 * `/health` es usado para validación
+
+---
+
+# 📈 ANEXO A: Auto Scaling (Escalamiento Automático)
+
+## 🎯 Objetivo
+
+Permitir que las EC2:
+
+* Se creen automáticamente cuando aumenta la carga
+* Se eliminen automáticamente cuando baja la carga
+
+---
+
+## 🏗️ 1. Requisito previo
+
+* Load Balancer funcionando
+* Target Group creado
+* Template de EC2 creado
+
+---
+
+## ⚙️ 2. Crear Auto Scaling Group (ASG)
+
+Ir a AWS → Auto Scaling Groups → Create Auto Scaling Group
+
+### 2.1 Seleccionar plantilla
+
+* Usar la plantilla creada
+
+---
+
+### 2.2 Configurar grupo
+
+* Nombre: `asg-api-test`
+* VPC: misma del Load Balancer
+* Subnets: al menos 2
+
+---
+
+### 2.3 Asociar al Load Balancer
+
+* Attach to existing load balancer
+* Seleccionar Target Group
+
+---
+
+### 2.4 Tamaño del grupo
+
+| Parámetro        | Valor |
+| ---------------- | ----- |
+| Desired capacity | 2     |
+| Minimum          | 2     |
+| Maximum          | 4     |
+
+---
+
+## 📊 3. Políticas de escalamiento
+
+Tipo: Target Tracking
+
+* Métrica: CPU
+* Target: 60%
+
+---
+
+## ❤️ 4. Health Check
+
+* EC2 + ELB
+
+---
+
+# 🧪 ANEXO B: Pruebas de Carga
+
+## 🎯 Objetivo
+
+* Validar escalamiento
+* Simular tráfico real
+
+---
+
+## 🛠️ 1. Herramienta
+
+### Apache JMeter
+
+![Image](https://images.openai.com/static-rsc-4/IbV_hLMCdIj3xAyy_mnjTtBw-560LH2iSGIPraPqbhI1W87O-gbholx-vA5MpBnN7_JEKYCh7aLF6us-bKZL_eCKbrRBAQ7Nb-inaev5iIZHNHY4ba-n4bQ5PkhIpTg51SDDXuXllcjF-VLFi08B7xY21fQARNHxdH6l9YJZJu3wLQNyEkrabJVNLKMUHtB7?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/skYHX4D8P_QoVBoi-OvmUjAdBRt8D7myNeoRieBe2hx-H09cDSKpjAZ0V6HKBSTcBaB5b38QRTXA6OhAIsgpz0LwirOR9trzuCsDUmXV89VV0MPd8jn7Obn2y-7wWQfID1m4-lMwDOtGUEXCvXCyy6zzCijU7odaO9-T7cUmjmGF9IWjJNmV0c2X3K3ruUjV?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/i_EmR1MApnVVdy9a9yTHOossbqRlS414hr401Yt4fZlQ93-skAhhNRsIEd-y0p3kXjeiH2KQEWNPHufLUZeFKHXzRrBLCpT33U2g7ZnylSioLeTPtm_I0Gp1_gX9_tz8_8V8dyDUXRXONsADrmRM6ciXLNgEIMX5HlFwdXnDagvyMW6DczjvkvOrYg9GoxWO?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/iMv6jR-cBDa9Vo-CWQToHkId6uMc1rEUd3plPGL-3xUHVxvU30hquN-qi8h0hT46_F6Z2j90jJ_LisgKDQYuamIYaeiBmEbw54VhtWZSGcwOUlOA58OJW_QAr4YFyRPmTUpFEbDZEVcB4r4n5y0Cmv9z6OKDc72lTb5KBRQl_V0i7rkcKoBSj8trRvY7FAfc?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/imQOYi8wfJ4pZN1RQGWVuTeoPPEYhqKKwvebhBwGs0c5TvHcwuOZs-bAtXzZbR9fPrdynx1nJhq62W6Nr6Ia5774aSzfQHzW0vZA5iXD9rrIOgp3pcWJdTuwYc-3HmJkyW6-6Z58R-heUGvucFCC_gwZh1y9AEv7X0kuPLMhUEoo722rApghIX2PK_djuDq0?purpose=fullsize)
+
+---
+
+## ⚙️ 2. Configuración
+
+* Usuarios: 100–500
+* Ramp-up: 10s
+* URL:
+
+```
+http://<LOAD_BALANCER_DNS>/hello
+```
+
+---
+
+## 🚀 3. Ejecutar prueba
+
+Genera carga sobre EC2
+
+---
+
+## 📊 4. Monitoreo
+
+* EC2
+* Auto Scaling
+* CloudWatch
+
+---
+
+## 🔥 5. Validación esperada
+
+* Se crean nuevas instancias
+* No se cae el sistema
+* LB distribuye tráfico
+
+---
+
+## 🧠 6. Prueba manual
+
+```bash
+for i in {1..1000}; do curl http://<LOAD_BALANCER_DNS>/hello & done
+```
+
+---
+
+# 🎯 ANEXO C: Validación final
+
+## ✔️ Deben demostrar
+
+* Acceso por Load Balancer
+* Múltiples EC2 activas
+* Escalamiento automático
+* Endpoint `/health` operativo
+
+---
+
+## ❓ Preguntas de defensa
+
+1. ¿Por qué usar Auto Scaling?
+2. ¿Qué métrica escala?
+3. ¿Qué hace el Load Balancer?
+4. ¿Qué pasa si una instancia falla?
+5. ¿Por qué múltiples subredes?
+6. Diferencia entre alta disponibilidad y escalabilidad
+
+---
+
+Si quieres el siguiente nivel (muy útil para evaluación):
+
+👉 te hago la **rúbrica con puntaje + errores típicos de alumnos + checklist de revisión rápida**
+eso ya te deja la clase lista para evaluar sin improvisar 💯
