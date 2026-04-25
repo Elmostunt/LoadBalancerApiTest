@@ -119,6 +119,7 @@ Crear Grupo de destino
 # 🛠️ 6. Preparar EC2 (Amazon Linux)
 
 ```bash
+#!/bin/bash
 sudo dnf update -y
 sudo dnf install git -y
 sudo dnf install python3 -y
@@ -131,6 +132,7 @@ cd LoadBalancerApiTest
 gunicorn -w 3 -k uvicorn.workers.UvicornWorker api:app -b 0.0.0.0:8000
 
 ```
+
 
 ---
 
