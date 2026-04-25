@@ -126,6 +126,10 @@ sudo dnf install pip -y
 pip install fastapi
 pip install "uvicorn[standard]"
 pip install gunicorn
+git clone https://github.com/Elmostunt/LoadBalancerApiTest.git
+cd LoadBalancerApiTest
+gunicorn -w 3 -k uvicorn.workers.UvicornWorker api:app -b 0.0.0.0:8000
+
 ```
 
 ---
@@ -160,6 +164,14 @@ def hello():
 ```bash
 uvicorn api:app --host 0.0.0.0 --port 8000
 ```
+
+
+
+
+
+
+
+
 
 ---
 
@@ -289,6 +301,8 @@ Tipo: Target Tracking
 
 ---
 
+
+
 ## 🛠️ 1. Herramienta
 
 ### Apache JMeter
@@ -368,8 +382,64 @@ for i in {1..1000}; do curl http://<LOAD_BALANCER_DNS>/hello & done
 6. Diferencia entre alta disponibilidad y escalabilidad
 
 ---
+# Detalles sobre escalado automático 
 
-Si quieres el siguiente nivel (muy útil para evaluación):
+🧠 Politica de Escalado Automático ¿Qué significa esto?
 
-👉 te hago la **rúbrica con puntaje + errores típicos de alumnos + checklist de revisión rápida**
-eso ya te deja la clase lista para evaluar sin improvisar 💯
+Básicamente le estás diciendo a AWS:
+
+👉 “Mantén la CPU de mis instancias alrededor de X% automáticamente”
+
+En tu caso:
+
+Métrica: Utilización promedio de CPU
+Valor de destino: 90%
+⚙️ ¿Cómo funciona en la práctica?
+
+AWS va a hacer esto automáticamente:
+
+🔼 Si la CPU sube de 90%
+
+👉 Agrega más instancias (scale out)
+
+🔽 Si la CPU baja de 90%
+
+👉 Elimina instancias (scale in)
+
+📊 Ejemplo real (para que lo uses en clase)
+
+Supongamos que tienes:
+
+2 instancias EC2
+CPU promedio = 95%
+
+🔥 AWS detecta que está sobre 90% →
+➡️ Lanza una nueva instancia (ahora tienes 3)
+
+Luego:
+
+CPU baja a 40%
+
+🧊 AWS detecta que sobra capacidad →
+➡️ Elimina instancias (quizás vuelve a 2)
+
+⏱️ ¿Qué es “Preparación de la instancia (300 segundos)”?
+
+👉 Es el tiempo que AWS espera antes de evaluar si la nueva instancia ya está lista.
+
+300 segundos = 5 minutos
+Sirve para evitar que escale demasiado rápido mientras la instancia aún está iniciando
+⚠️ Ojo con ese 90% (importante)
+
+Te digo directo:
+
+👉 90% es MUY alto para producción
+
+¿Por qué?
+
+Vas a escalar tarde
+Los usuarios pueden sentir lentitud antes de que escale
+
+💡 Recomendado normalmente:
+
+50% – 70% para apps web
