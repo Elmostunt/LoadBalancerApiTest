@@ -127,6 +127,7 @@ sudo dnf install pip -y
 pip install fastapi
 pip install "uvicorn[standard]"
 pip install gunicorn
+pip install pymysql
 git clone https://github.com/Elmostunt/LoadBalancerApiTest.git
 cd LoadBalancerApiTest
 gunicorn -w 3 -k uvicorn.workers.UvicornWorker api:app -b 0.0.0.0:8000
