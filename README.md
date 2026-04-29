@@ -445,3 +445,219 @@ Los usuarios pueden sentir lentitud antes de que escale
 💡 Recomendado normalmente:
 
 50% – 70% para apps web
+
+
+
+Perfecto, tomé tu README base y le agregué lo que te falta para clase: **RDS + conexión desde Python + ejemplo real guardando usuario + scripts SQL**. Te lo dejo ordenado y listo para pegar como continuación del tutorial 👇
+
+---
+
+# 🔥 EXTENSIÓN — Integración con RDS (Base de Datos)
+
+Basado en el tutorial original , ahora vamos a llevarlo a nivel **full backend real**:
+
+👉 API + Load Balancer + Auto Scaling + Base de Datos (RDS)
+
+---
+
+# 🗄️ 14. Crear Base de Datos en RDS (MySQL)
+
+## ⚙️ Paso a paso
+
+1. Ir a **AWS → RDS → Create database**
+
+2. Configuración:
+
+* Engine: **MySQL**
+* Version: default
+* Template: **Free tier**
+* DB Instance Identifier:
+  `db-api-test`
+* Master username:
+  `admin`
+* Password:
+  `Admin1234!`
+
+---
+
+## 🌐 Conectividad
+
+IMPORTANTE:
+
+* VPC: misma del EC2
+* Public access: **YES (solo para pruebas)**
+* Security Group: crear uno nuevo
+
+---
+
+## 🔐 Security Group RDS
+
+Agregar regla:
+
+| Tipo  | Puerto | Origen    |
+| ----- | ------ | --------- |
+| MySQL | 3306   | SG de EC2 |
+
+👉 NO usar 0.0.0.0/0 en producción
+
+---
+
+# 🧱 15. Script SQL (crear tabla)
+
+Conéctate desde EC2:
+
+```bash
+sudo dnf install mariadb105 -y
+mysql -h <RDS_ENDPOINT> -u admin -p
+```
+
+Luego ejecutar:
+
+```sql
+CREATE DATABASE api_db;
+
+USE api_db;
+
+CREATE TABLE usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100),
+    email VARCHAR(100),
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+---
+
+# 🐍 16. Instalar driver MySQL en EC2
+
+```bash
+pip install pymysql
+```
+
+---
+
+# 🔌 17. Conexión Python a RDS
+
+Editar tu `api.py`:
+
+```python
+from fastapi import FastAPI
+import pymysql
+
+app = FastAPI()
+
+def get_connection():
+    return pymysql.connect(
+        host="TU_RDS_ENDPOINT",
+        user="admin",
+        password="Admin1234!",
+        database="api_db",
+        cursorclass=pymysql.cursors.DictCursor
+    )
+```
+
+---
+
+# ➕ 18. Endpoint para guardar usuario
+
+```python
+@app.post("/usuarios")
+def crear_usuario(nombre: str, email: str):
+    connection = get_connection()
+    
+    with connection:
+        with connection.cursor() as cursor:
+            sql = "INSERT INTO usuarios (nombre, email) VALUES (%s, %s)"
+            cursor.execute(sql, (nombre, email))
+        
+        connection.commit()
+    
+    return {
+        "message": "Usuario creado correctamente"
+    }
+```
+
+---
+
+# 📥 19. Endpoint para listar usuarios
+
+```python
+@app.get("/usuarios")
+def listar_usuarios():
+    connection = get_connection()
+    
+    with connection:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM usuarios")
+            result = cursor.fetchall()
+    
+    return result
+```
+
+---
+
+# 🚀 20. Probar desde navegador / Postman
+
+### Crear usuario:
+
+```
+POST http://<LOAD_BALANCER_DNS>/usuarios?nombre=Juan&email=juan@test.com
+```
+
+### Listar:
+
+```
+GET http://<LOAD_BALANCER_DNS>/usuarios
+```
+
+---
+
+# 🧠 21. Flujo completo (para explicar en clase)
+
+```text
+Cliente
+  ↓
+Load Balancer (80)
+  ↓
+EC2 (FastAPI)
+  ↓
+RDS (MySQL)
+```
+
+---
+
+# ⚠️ Buenas prácticas (dilo en la defensa)
+
+* No hardcodear credenciales → usar variables de entorno
+* No abrir RDS a internet
+* Usar IAM + Secrets Manager (pro nivel)
+* Manejar excepciones en conexión
+* Usar pool de conexiones (nivel intermedio-avanzado)
+
+---
+
+# 🧪 BONUS (sube el nivel de la evaluación)
+
+Pídeles esto a los alumnos:
+
+👉 Validar:
+
+* Inserción en DB
+* Lectura desde múltiples instancias EC2
+* Persistencia (aunque mueran instancias)
+
+👉 Pregunta clave:
+
+> ¿Por qué RDS no se cae aunque EC2 escale?
+
+---
+
+# 💥 Resultado final que logras con esto
+
+Ahora tu laboratorio tiene:
+
+✅ API real
+✅ Load Balancer
+✅ Auto Scaling
+✅ Base de datos persistente
+✅ Backend completo estilo producción
